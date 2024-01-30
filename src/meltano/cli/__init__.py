@@ -119,6 +119,7 @@ def _run_cli() -> None:
 def main() -> None:
     """Entry point for the meltano CLI."""
     # Mark the current process as executed via the CLI
+    logging.captureWarnings(capture=True)
     os.environ["MELTANO_JOB_TRIGGER"] = os.getenv("MELTANO_JOB_TRIGGER", "cli")
     try:
         _run_cli()
