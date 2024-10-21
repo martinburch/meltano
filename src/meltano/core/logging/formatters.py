@@ -18,6 +18,7 @@ else:
     from typing import Unpack  # noqa: ICN003
 
 if t.TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
     from types import TracebackType
 
     from structlog.types import Processor
@@ -43,6 +44,11 @@ class LoggingFeatures(t.TypedDict, total=False):
     https://www.structlog.org/en/stable/api.html#structlog.processors.CallsiteParameter.
     """
 
+    dict_tracebacks: bool
+    """Enable tracebacks dictionaries in log entries.
+    https://www.structlog.org/en/stable/api.html#structlog.processors.dict_tracebacks.
+    """
+
 
 # Convert boolean kwargs to LoggingFeatures enum.
 def _processors_from_kwargs(
@@ -57,13 +63,16 @@ def _processors_from_kwargs(
             ),
         )
 
+    if features.get("dict_tracebacks", False):
+        yield structlog.processors.dict_tracebacks
+
 
 def rich_exception_formatter_factory(
     color_system: t.Literal["auto", "standard", "256", "truecolor", "windows"] = "auto",
     *,
     no_color: bool | None = None,
     show_locals: bool = False,
-) -> t.Callable[[t.TextIO, structlog.types.ExcInfo], None]:
+) -> Callable[[t.TextIO, structlog.types.ExcInfo], None]:
     """Create an exception formatter for logging using the rich package.
 
     Examples:
@@ -155,7 +164,7 @@ def console_log_formatter(
 def key_value_formatter(
     *,
     sort_keys: bool = False,
-    key_order: t.Sequence[str] | None = None,
+    key_order: Sequence[str] | None = None,
     drop_missing: bool = False,
     **features: Unpack[LoggingFeatures],
 ) -> structlog.stdlib.ProcessorFormatter:
@@ -195,6 +204,7 @@ def json_formatter(
     Returns:
         A configured JSON formatter.
     """
+    features.setdefault("dict_tracebacks", True)
     return _process_formatter(
         *_processors_from_kwargs(**features),
         structlog.stdlib.ProcessorFormatter.remove_processors_meta,
