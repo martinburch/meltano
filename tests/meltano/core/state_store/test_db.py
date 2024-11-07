@@ -9,7 +9,7 @@ from meltano.core.state_store import DBStateStoreManager
 
 
 class TestDBStateStoreManager:
-    @pytest.fixture()
+    @pytest.fixture
     def subject(
         self,
         job_history_session,
@@ -84,3 +84,10 @@ class TestDBStateStoreManager:
         state_ids_with_jobs,
     ) -> None:
         assert set(subject.get_state_ids()) == set(state_ids_with_jobs.keys())
+
+    def test_clear_all(self, subject: DBStateStoreManager) -> None:
+        state_ids = list(subject.get_state_ids())
+        initial_count = len(state_ids)
+        assert initial_count > 0
+        assert subject.clear_all() == initial_count
+        assert next(subject.get_state_ids(), None) is None
